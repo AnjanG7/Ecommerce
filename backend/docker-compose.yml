@@ -1,0 +1,31 @@
+version: '3.8'
+name: EcomemrceProject
+services:
+  api:
+    image: anjanghimire10/ecommerceproject
+    build: .
+    ports:
+      - 8010:8010
+    volumes:
+      - ./:/usr/app
+      - /usr/app/node_modules
+    env_file:
+      - ./.env
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - data:/data/db
+    ports:
+      - 27017:27017
+    restart: always  
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - 6379:6379
+
+volumes:
+  data:
