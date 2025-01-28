@@ -3,7 +3,6 @@ name: EcomemrceProject
 services:
   api:
     image: anjanghimire10/ecommerceproject
-    build: .
     ports:
       - 8010:8010
     volumes:
@@ -26,6 +25,8 @@ services:
     container_name: redis
     ports:
       - 6379:6379
-
+      
+    depends_on:
+      - mongodb
 volumes:
   data:

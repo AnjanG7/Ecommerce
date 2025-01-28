@@ -22,6 +22,7 @@ const startServer = () => {
 if (majorNodeVersion >= 14) {
   try {
     await connectDB();
+ 
     startServer();
   } catch (err) {
     logger.error("Mongo db connect error: ", err);

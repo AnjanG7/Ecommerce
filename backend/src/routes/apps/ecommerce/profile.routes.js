@@ -3,6 +3,7 @@ import {
   getMyEcomProfile,
   getMyOrders,
   updateEcomProfile,
+  createEcomProfile
 } from "../../../controllers/apps/ecommerce/profile.controllers.js";
 import { verifyJWT } from "../../../middlewares/auth.middlewares.js";
 import { updateEcomProfileValidator } from "../../../validators/apps/ecommerce/profile.validators.js";
@@ -14,6 +15,7 @@ router.use(verifyJWT);
 
 router
   .route("/")
+  .post(createEcomProfile)
   .get(getMyEcomProfile)
   .patch(updateEcomProfileValidator(), validate, updateEcomProfile);
 

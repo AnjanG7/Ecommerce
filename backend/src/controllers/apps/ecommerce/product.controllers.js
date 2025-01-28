@@ -11,9 +11,21 @@ import {
 } from "../../../utils/helpers.js";
 import { MAXIMUM_SUB_IMAGE_COUNT } from "../../../constants.js";
 import { Category } from "../../../models/apps/ecommerce/category.models.js";
-
+import { redisClient } from "../../../redis/client.js";
 const getAllProducts = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
+  const cachedProduct = await redisClient.get("product");
+  if (cachedProduct) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedProduct),
+          "Successfully fetched cached Prodcut!!!"
+        )
+      );
+  }
   const productAggregate = Product.aggregate([{ $match: {} }]);
 
   const products = await Product.aggregatePaginate(
@@ -27,7 +39,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
       },
     })
   );
-
+  await redisClient.set("product", JSON.stringify(products));
+  await redisClient.expire("product", 30);
   return res
     .status(200)
     .json(new ApiResponse(200, products, "Products fetched successfully"));
@@ -194,7 +207,18 @@ const getProductById = asyncHandler(async (req, res) => {
 const getProductsByCategory = asyncHandler(async (req, res) => {
   const { categoryId } = req.params;
   const { page = 1, limit = 10 } = req.query;
-
+  const cachedProductCategory = await redisClient.get("productcategory");
+  if (cachedProductCategory) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedProductCategory),
+          "Successfully fetched cached Prodcut by categories!!!"
+        )
+      );
+  }
   const category = await Category.findById(categoryId).select("name _id");
 
   if (!category) {
@@ -221,7 +245,8 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
       },
     })
   );
-
+  await redisClient.set("productcategory", JSON.stringify(products));
+  await redisClient.expire("productcategory", 30);
   return res
     .status(200)
     .json(

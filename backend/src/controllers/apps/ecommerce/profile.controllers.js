@@ -1,9 +1,29 @@
 import { EcomOrder } from "../../../models/apps/ecommerce/order.models.js";
 import { EcomProfile } from "../../../models/apps/ecommerce/profile.models.js";
+import { ApiError } from "../../../utils/ApiError.js";
 import { ApiResponse } from "../../../utils/ApiResponse.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 import { getMongoosePaginationOptions } from "../../../utils/helpers.js";
 
+const createEcomProfile = asyncHandler(async (req, res) => {
+  const { firstName, lastName, phoneNumber } = req.body;
+  if ([firstName,lastName,phoneNumber].every((field)=>field?.trim()==="")) {
+    throw new ApiError(400, "All the field are required!!!");
+  }
+  const createUser= await EcomProfile.create({
+    firstName,
+    lastName,
+    phoneNumber
+  })
+  if (!createUser) {
+    throw new ApiError(400,"Failed to create the EcomProfile!!!")
+  }
+  return res
+  .status(200)
+  .json(new ApiResponse(200, createUser, "Successfully created EcomProfile!!!"));
+
+
+});
 const getMyEcomProfile = asyncHandler(async (req, res) => {
   let profile = await EcomProfile.findOne({
     owner: req.user._id,
@@ -110,4 +130,4 @@ const getMyOrders = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, orders, "Orders fetched successfully"));
 });
 
-export { getMyEcomProfile, updateEcomProfile, getMyOrders };
+export { getMyEcomProfile, updateEcomProfile, getMyOrders, createEcomProfile };

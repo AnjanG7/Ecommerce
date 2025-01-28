@@ -7,7 +7,7 @@ import { asyncHandler } from "../../../utils/asyncHandler.js";
 import { getCart } from "./cart.controllers.js";
 import { Cart } from "../../../models/apps/ecommerce/cart.models.js";
 import { getMongoosePaginationOptions } from "../../../utils/helpers.js";
-
+import { redisClient } from "../../../redis/client.js";
 const createCoupon = asyncHandler(async (req, res) => {
   const {
     name,
@@ -92,7 +92,7 @@ const applyCoupon = asyncHandler(async (req, res) => {
   if (userCart.cartTotal < coupon.minimumCartValue) {
     throw new ApiError(
       400,
-      "Add items worth INR " +
+      "Add items worth NPR " +
         (coupon.minimumCartValue - userCart.cartTotal) +
         "/- or more to apply this coupon"
     );
@@ -171,6 +171,18 @@ const updateCouponActiveStatus = asyncHandler(async (req, res) => {
 
 const getAllCoupons = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
+  const cachedCoupon = await redisClient.get("coupon");
+  if (cachedCoupon) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedCoupon),
+          "Successfully fetched cached coupon!!!"
+        )
+      );
+  }
   const couponAggregate = Coupon.aggregate([{ $match: {} }]);
 
   const coupons = await Coupon.aggregatePaginate(
@@ -184,6 +196,8 @@ const getAllCoupons = asyncHandler(async (req, res) => {
       },
     })
   );
+  await redisClient.set("coupon", JSON.stringify(coupons));
+  await redisClient.expire("coupon", 30);
 
   return res
     .status(200)
@@ -192,7 +206,18 @@ const getAllCoupons = asyncHandler(async (req, res) => {
 
 const getValidCouponsForCustomer = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
-
+  const cachedValidCoupon = await redisClient.get("validcoupon");
+  if (cachedValidCoupon) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedValidCoupon),
+          "Successfully fetched cached valid coupon!!!"
+        )
+      );
+  }
   const userCart = await getCart(req.user._id);
   const cartTotal = userCart.cartTotal;
   const couponAggregate = Coupon.aggregate([
@@ -228,7 +253,8 @@ const getValidCouponsForCustomer = asyncHandler(async (req, res) => {
       },
     })
   );
-
+  await redisClient.set("validcoupon", JSON.stringify(coupons));
+  await redisClient.expire("validcoupon", 30);
   return res
     .status(200)
     .json(

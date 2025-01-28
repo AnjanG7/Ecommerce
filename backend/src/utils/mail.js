@@ -10,11 +10,7 @@ import logger from "../logger/winston.logger.js";
 const sendEmail = async (options) => {
   // Initialize mailgen instance with default theme and brand configuration
   const mailGenerator = new Mailgen({
-    theme: "default",
-    product: {
-      name: "FreeAPI",
-      link: "https://freeapi.app",
-    },
+ 
   });
 
   // For more info on how mailgen content work visit https://github.com/eladnava/mailgen#readme
@@ -26,16 +22,16 @@ const sendEmail = async (options) => {
 
   // Create a nodemailer transporter instance which is responsible to send a mail
   const transporter = nodemailer.createTransport({
-    host: process.env.MAILTRAP_SMTP_HOST,
-    port: process.env.MAILTRAP_SMTP_PORT,
+    host: 'sandbox.smtp.mailtrap.io',
+    port: 2525,
     auth: {
-      user: process.env.MAILTRAP_SMTP_USER,
-      pass: process.env.MAILTRAP_SMTP_PASS,
+      user:'5cbcad5e91e19e',
+      pass:'********f972',
     },
   });
 
   const mail = {
-    from: "mail.freeapi@gmail.com", // We can name this anything. The mail will go to your Mailtrap inbox
+    from: "mail.ecommerce@gmail.com", // We can name this anything. The mail will go to your Mailtrap inbox
     to: options.email, // receiver's mail
     subject: options.subject, // mail subject
     text: emailTextual, // mailgen content textual variant

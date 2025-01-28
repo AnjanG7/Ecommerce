@@ -3,7 +3,7 @@ import { ApiError } from "../../../utils/ApiError.js";
 import { ApiResponse } from "../../../utils/ApiResponse.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 import { getMongoosePaginationOptions } from "../../../utils/helpers.js";
-
+import {redisClient} from "../../../redis/client.js";
 const createCategory = asyncHandler(async (req, res) => {
   const { name } = req.body;
 
@@ -16,6 +16,18 @@ const createCategory = asyncHandler(async (req, res) => {
 
 const getAllCategories = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
+  const cachedCategory = await redisClient.get("category");
+  if (cachedCategory) {
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedCategory),
+          "Successfully fetched cached category!!!"
+        )
+      );
+  }
   const categoryAggregate = Category.aggregate([{ $match: {} }]);
 
   const categories = await Category.aggregatePaginate(
@@ -29,6 +41,8 @@ const getAllCategories = asyncHandler(async (req, res) => {
       },
     })
   );
+  await redisClient.set("category", JSON.stringify(categories));
+  await redisClient.expire("category", 30);
   return res
     .status(200)
     .json(new ApiResponse(200, categories, "Categories fetched successfully"));
